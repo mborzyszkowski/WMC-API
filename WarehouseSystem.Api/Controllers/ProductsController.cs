@@ -28,6 +28,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyCollection<Product>>> SearchAllProducts(CancellationToken token) =>
             await _context.Products
+                .Include(p => p.QuantityChanges)
                 .ToListAsync(token);
     }
 }
