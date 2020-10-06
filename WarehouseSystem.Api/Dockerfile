@@ -17,4 +17,4 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 RUN curl -sSL https://aka.ms/getvsdbgsh | /bin/sh /dev/stdin -v latest -l /vsdbg
 WORKDIR /app
 COPY --from=build-env /app/out .
-ENTRYPOINT ["dotnet", "./InternshipSystem.Api.dll"]
+ENTRYPOINT ["dotnet", "./WarehouseSystem.Api.dll"]
