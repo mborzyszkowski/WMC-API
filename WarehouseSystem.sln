@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarehouseSystem.Api", "WarehouseSystem.Api\WarehouseSystem.Api.csproj", "{573A093C-8244-4CCF-9C86-39E9162C62E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7AC31A69-9B52-4316-A351-3E3D2BE04EB3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarehouseSystem.Core", "WarehouseSystem.Core\WarehouseSystem.Core.csproj", "{A0DB4BB1-071C-4CB3-8BD7-01C0CA773611}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarehouseSystem.Repository", "WarehouseSystem.Repository\WarehouseSystem.Repository.csproj", "{023137BA-C26A-4B76-ABFF-EA27BFB79E90}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{573A093C-8244-4CCF-9C86-39E9162C62E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{573A093C-8244-4CCF-9C86-39E9162C62E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{573A093C-8244-4CCF-9C86-39E9162C62E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{573A093C-8244-4CCF-9C86-39E9162C62E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0DB4BB1-071C-4CB3-8BD7-01C0CA773611}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0DB4BB1-071C-4CB3-8BD7-01C0CA773611}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0DB4BB1-071C-4CB3-8BD7-01C0CA773611}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0DB4BB1-071C-4CB3-8BD7-01C0CA773611}.Release|Any CPU.Build.0 = Release|Any CPU
+		{023137BA-C26A-4B76-ABFF-EA27BFB79E90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{023137BA-C26A-4B76-ABFF-EA27BFB79E90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{023137BA-C26A-4B76-ABFF-EA27BFB79E90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{023137BA-C26A-4B76-ABFF-EA27BFB79E90}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{573A093C-8244-4CCF-9C86-39E9162C62E8} = {7AC31A69-9B52-4316-A351-3E3D2BE04EB3}
+		{A0DB4BB1-071C-4CB3-8BD7-01C0CA773611} = {7AC31A69-9B52-4316-A351-3E3D2BE04EB3}
+		{023137BA-C26A-4B76-ABFF-EA27BFB79E90} = {7AC31A69-9B52-4316-A351-3E3D2BE04EB3}
+	EndGlobalSection
+EndGlobal
