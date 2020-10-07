@@ -28,15 +28,43 @@ namespace WarehouseSystem.Controllers
         /// <returns>All products info in warehouse</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        //TODO: rewrite to return quantity, not changes
         public async Task<ActionResult<IReadOnlyCollection<ProductResult>>> SearchAllProducts(CancellationToken token) =>
-            throw new NotImplementedException();
-        
+            await _context.Products
+                .Include(p => p.QuantityChanges)
+                .SelectMany(
+                    p => p.QuantityChanges,
+                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity })
+                .GroupBy(p => new { p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price })
+                .Select(p => new ProductResult
+                {
+                    Id = p.Key.Id,
+                    AddDate = p.Key.AddDate,
+                    ManufacturerName = p.Key.ManufacturerName,
+                    ModelName = p.Key.ModelName,
+                    Price = p.Key.Price,
+                    Quantity = p.Sum(c => c.Quantity),
+                })
+                .ToListAsync(cancellationToken: token);
+
         [HttpGet("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        //TODO: rewrite to return quantity, not changes
         public async Task<ActionResult<ProductResult>> GetProduct(long productId, CancellationToken token) =>
-            throw new NotImplementedException();
+            await _context.Products
+                .Include(p => p.QuantityChanges)
+                .SelectMany(
+                    p => p.QuantityChanges,
+                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity })
+                .GroupBy(p => new { p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price })
+                .Select(p => new ProductResult
+                {
+                    Id = p.Key.Id,
+                    AddDate = p.Key.AddDate,
+                    ManufacturerName = p.Key.ManufacturerName,
+                    ModelName = p.Key.ModelName,
+                    Price = p.Key.Price,
+                    Quantity = p.Sum(c => c.Quantity),
+                })
+                .FirstAsync(p => p.Id == productId, token);
         
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -48,7 +76,7 @@ namespace WarehouseSystem.Controllers
         public async Task<ActionResult> UpdateProduct(long productId, [FromBody] ProductForm productForm, CancellationToken token) =>
             throw new NotImplementedException();
         
-        [HttpDelete]
+        [HttpDelete("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> DeleteProduct(long productId, CancellationToken token) => 
             throw new NotImplementedException();

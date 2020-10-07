@@ -50,7 +50,20 @@ namespace WarehouseSystem.Repository
                         {
                             Quantity = 6,
                             AddDate = new DateTime(2020, 7, 10),
-                        }
+                            
+                        },
+                        new ProductQuantityChange
+                        {
+                            Quantity = 5,
+                            AddDate = new DateTime(2020, 7, 11),
+                            
+                        },
+                        new ProductQuantityChange
+                        {
+                            Quantity = -1,
+                            AddDate = new DateTime(2020, 7, 12),
+                            
+                        },
                     }
                 },
             };
