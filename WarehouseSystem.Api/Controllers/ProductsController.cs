@@ -48,6 +48,7 @@ namespace WarehouseSystem.Controllers
 
         [HttpGet("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductResult>> GetProduct(long productId, CancellationToken token) =>
             await _context.Products
                 .Include(p => p.QuantityChanges)
@@ -68,22 +69,101 @@ namespace WarehouseSystem.Controllers
         
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> AddProduct([FromBody] ProductForm productForm, CancellationToken token) =>
-            throw new NotImplementedException();
-        
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> AddProduct([FromBody] ProductForm productForm, CancellationToken token)
+        {
+            var validator = new ProductForm.Validator();
+            var validationResult = await validator.ValidateAsync(productForm, token);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.ToString());
+            }
+            
+            var newProduct = Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value);
+
+            await _context.Products.AddAsync(newProduct, token);
+            await _context.SaveChangesAsync(token);
+
+            return Ok();
+        }
+
         [HttpPut("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> UpdateProduct(long productId, [FromBody] ProductForm productForm, CancellationToken token) =>
-            throw new NotImplementedException();
-        
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> UpdateProduct(long productId, [FromBody] ProductForm productForm, CancellationToken token)
+        {
+            var validator = new ProductForm.Validator();
+            var validationResult = await validator.ValidateAsync(productForm, token);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.ToString());
+            }
+
+            var product = await _context.Products
+                .Include(p => p.QuantityChanges)
+                .FirstOrDefaultAsync(p => p.Id == productId, token);
+            
+            if (product == null)
+            {
+                return NotFound();
+            }
+            
+            //Rewrite productForm to product by AutoMaper
+            product.UpdateProduct(Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value));
+            
+            await _context.SaveChangesAsync(token);
+
+            return Ok();
+        }
+
         [HttpDelete("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> DeleteProduct(long productId, CancellationToken token) => 
-            throw new NotImplementedException();
-        
-        [HttpPut("quantity/{productId}/{quantityChange}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> DeleteProduct(long productId, CancellationToken token)
+        {
+            var productToDelete = await _context.Products
+                .Include(p => p.QuantityChanges)
+                .FirstOrDefaultAsync(p => p.Id == productId, token);
+
+            if (productToDelete == null)
+            {
+                return NotFound();
+            }
+
+            _context.Products.Remove(productToDelete);
+            await _context.SaveChangesAsync(token);
+
+            return Ok();
+        }
+
+        [HttpPut("{productId}/{quantityChange}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> ChangeQuantity(long productId, long quantityChange, CancellationToken token) => 
-            throw new NotImplementedException();
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> ChangeQuantity(long productId, long quantityChange, CancellationToken token)
+        {
+            var product = await _context.Products
+                .Include(p => p.QuantityChanges)
+                .FirstOrDefaultAsync(p => p.Id == productId, token);
+            
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            if (product.QuantityChanges.Sum(q => q.Quantity) - quantityChange < 0)
+            {
+                //TODO: more info???
+                return BadRequest();
+            }
+            
+            product.QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(quantityChange));
+            await _context.SaveChangesAsync(token);
+            
+            return Ok();
+        }
     }
 }
