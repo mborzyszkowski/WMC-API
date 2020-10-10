@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +31,7 @@ namespace WarehouseSystem.Controllers
             await _context.Products
                 .Include(p => p.QuantityChanges)
                 .SelectMany(
-                    p => p.QuantityChanges,
+                    p => p.QuantityChanges.DefaultIfEmpty(),
                     (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity })
                 .GroupBy(p => new { p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price })
                 .Select(p => new ProductResult
@@ -49,13 +48,14 @@ namespace WarehouseSystem.Controllers
         [HttpGet("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ProductResult>> GetProduct(long productId, CancellationToken token) =>
-            await _context.Products
+        public async Task<ActionResult<ProductResult>> GetProduct(long productId, CancellationToken token)
+        {
+            var product = await _context.Products
                 .Include(p => p.QuantityChanges)
                 .SelectMany(
-                    p => p.QuantityChanges,
-                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity })
-                .GroupBy(p => new { p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price })
+                    p => p.QuantityChanges.DefaultIfEmpty(),
+                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity})
+                .GroupBy(p => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price})
                 .Select(p => new ProductResult
                 {
                     Id = p.Key.Id,
@@ -65,8 +65,16 @@ namespace WarehouseSystem.Controllers
                     Price = p.Key.Price,
                     Quantity = p.Sum(c => c.Quantity),
                 })
-                .FirstAsync(p => p.Id == productId, token);
-        
+                .FirstOrDefaultAsync(p => p.Id == productId, token);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -154,10 +162,9 @@ namespace WarehouseSystem.Controllers
                 return NotFound();
             }
 
-            if (product.QuantityChanges.Sum(q => q.Quantity) - quantityChange < 0)
+            if (product.QuantityChanges.Sum(q => q.Quantity) + quantityChange < 0)
             {
-                //TODO: more info???
-                return BadRequest();
+                return BadRequest($"Result quantity can not be less than 0");
             }
             
             product.QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(quantityChange));
