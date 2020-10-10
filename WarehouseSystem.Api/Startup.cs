@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,8 @@ namespace WarehouseSystem
             services
                 .AddDbContext<WarehouseDbContext>(o =>
                     o.UseNpgsql(Configuration.GetConnectionString("WarehouseDatabase")))
-                .AddScoped<DatabaseFiller>();
+                .AddScoped<DatabaseFiller>()
+                .AddAutoMapper(cfg => cfg.AddProfile<ApiProfile>());
 
             services
                 .AddSwaggerGen(options =>
