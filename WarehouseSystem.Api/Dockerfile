@@ -4,6 +4,9 @@ RUN mkdir /proj && cp --parents */*.csproj /proj
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build-env
 WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
 # Copy csproj and restore as distinct layers
 COPY --from=prep-env ./proj .
 RUN dotnet restore ./WarehouseSystem.Api
