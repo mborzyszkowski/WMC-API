@@ -26,9 +26,10 @@ namespace WarehouseSystem.Controllers
         }
 
         /// <summary>
-        /// Get all products from warehouse
+        /// Gets all products from warehouse
         /// </summary>
         /// <response code="200">Successfully retrieved Products</response>
+        /// <response code="401">Only for authorise user</response>
         /// <returns>All products info in warehouse</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -51,6 +52,13 @@ namespace WarehouseSystem.Controllers
                 })
                 .ToListAsync(cancellationToken: token);
 
+        /// <summary>
+        /// Gets product from warehouse by id
+        /// </summary>
+        /// <response code="200">Successfully retrieved Product</response>
+        /// <response code="401">Only for authorise user</response>
+        /// <response code="404">Product with given id not found</response>
+        /// <returns>Product from warehouse by id</returns>
         [HttpGet("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -82,10 +90,17 @@ namespace WarehouseSystem.Controllers
             return Ok(product);
         }
 
+        /// <summary>
+        /// Adds new product to warehouse
+        /// </summary>
+        /// <response code="201">Successfully added Product</response>
+        /// <response code="400">Product form malformed</response>
+        /// <response code="401">Only for authorise user</response>
+        /// <returns>New product</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult> AddProduct([FromBody] ProductForm productForm, CancellationToken token)
         {
             var validator = new ProductForm.Validator();
@@ -104,6 +119,14 @@ namespace WarehouseSystem.Controllers
             return Created("product", _mapper.Map<ProductResult>(newProduct));
         }
 
+        /// <summary>
+        /// Updates product from warehouse
+        /// </summary>
+        /// <response code="204">Successfully updated Product</response>
+        /// <response code="400">Product form malformed</response>
+        /// <response code="401">Only for authorise user</response>
+        /// <response code="404">Product with given id not found</response>
+        /// <returns>Ok</returns>
         [HttpPut("{productId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -135,6 +158,13 @@ namespace WarehouseSystem.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Deletes product from warehouse
+        /// </summary>
+        /// <response code="200">Successfully deleted Product</response>
+        /// <response code="401">Only for authorise user with manager role</response>
+        /// <response code="404">Product with given id not found</response>
+        /// <returns>Ok</returns>
         [HttpDelete("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -156,6 +186,14 @@ namespace WarehouseSystem.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Changes quantity of product in warehouse
+        /// </summary>
+        /// <response code="200">Successfully deleted Product</response>
+        /// <response code="400">Quantity change can't change sum of product quantity to negative</response>
+        /// <response code="401">Only for authorise user with manager role</response>
+        /// <response code="404">Product with given id not found</response>
+        /// <returns>Ok</returns>
         [HttpPut("{productId}/{quantityChange}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
