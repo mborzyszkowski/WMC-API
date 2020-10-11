@@ -6,12 +6,18 @@ services:
     environment:
       CONNECTIONSTRINGS__WAREHOUSEDATABASE: "Host=db.postgres;Port=5432;Database=postgres;Username=postgres;Password=awhousepi"
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_URLS: https://+:443;http://+:80
+      ASPNETCORE_HTTPS_PORT: 44349
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "7d653561-e477-4898-828c-b89242c82436"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /root/.aspnet/https/aspnetapp.pfx
       FILLER__USE_DEFAULT_DATA: "true"
     depends_on: 
       - db.postgres
     ports: 
       - 8080:80
+      - 44349:443
+    volumes:
+      - /c/.aspnet/https:/root/.aspnet/https/
 
   db.postgres:
     image: postgres:latest
