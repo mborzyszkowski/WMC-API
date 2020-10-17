@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using WarehouseSystem.Extensions;
+using WarehouseSystem.ModelBinders;
 using WarehouseSystem.Options;
 using WarehouseSystem.Repository;
 using WarehouseSystem.Security;
@@ -52,7 +53,7 @@ namespace WarehouseSystem
                     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                     options.IncludeXmlComments(xmlPath);
                 })
-                .AddControllers()
+                .AddControllers(o => { o.ModelBinderProviders.Insert(0, new UserInfoBinderProvider()); })
                 .AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
         }
 

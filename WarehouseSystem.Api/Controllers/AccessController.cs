@@ -1,7 +1,10 @@
-﻿using System.Net.Http;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +53,7 @@ namespace WarehouseSystem.Controllers
             var facebookUser = JsonConvert.DeserializeObject<FacebookUser>(result);
             
             var wmcUser = await _context.WmcUser
-                .FirstOrDefaultAsync(wu => wu.FacebookId.Equals(facebookUser.Id), cancellationToken: token);
+                .FirstOrDefaultAsync(wu => wu.FacebookId.Equals(facebookUser.Id), token);
 
             if (wmcUser == null)
             {
@@ -81,7 +84,7 @@ namespace WarehouseSystem.Controllers
             }
             
             var wmcUser = await _context.WmcUser
-                .FirstOrDefaultAsync(wu => wu.Name.Equals(wmcAuth.UserName) && wu.Password.Equals(wmcAuth.Password), cancellationToken: token);
+                .FirstOrDefaultAsync(wu => wu.Name.Equals(wmcAuth.UserName) && wu.Password.Equals(wmcAuth.Password), token);
 
             if (wmcUser == null)
             {
@@ -92,6 +95,13 @@ namespace WarehouseSystem.Controllers
                 
             return Ok(_tokenService.GenerateToken(identity));
         }
+
+        [HttpGet("role")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize]
+        public async Task<ActionResult<IReadOnlyCollection<string>>> AuthenticateWithWmc([FromServices] UserInfo userInfo, CancellationToken token)
+            => userInfo.IsManager ? new List<string> {"employee", "manager"} : new List<string> {"employee"};
 
         private ClaimsIdentity CreateClaimsIdentity(WmcUser wmcUser)
         {
