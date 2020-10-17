@@ -11,7 +11,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using WarehouseSystem.Extensions;
+using WarehouseSystem.Options;
 using WarehouseSystem.Repository;
+using WarehouseSystem.Security;
+using WarehouseSystem.Services;
 
 namespace WarehouseSystem
 {
@@ -25,9 +28,20 @@ namespace WarehouseSystem
         public void ConfigureServices(IServiceCollection services)
         {
             services
+                .Configure<SecurityOptions>(Configuration.GetSection("SecurityOptions"));
+
+            services
+                .AddUserAuthentication()
+                .AddAuthorization(o =>
+                {
+                    o.AddPolicy(Policies.ManagerOnly, policy => policy.RequireClaim("Manager"));
+                });
+            
+            services
                 .AddDbContext<WarehouseDbContext>(o =>
                     o.UseNpgsql(Configuration.GetConnectionString("WarehouseDatabase")))
                 .AddScoped<DatabaseFiller>()
+                .AddScoped<JwtTokenService>()
                 .AddAutoMapper(cfg => cfg.AddProfile<ApiProfile>());
 
             services
@@ -55,6 +69,7 @@ namespace WarehouseSystem
 
             app.UseHttpsRedirection()
                 .UseRouting()
+                .UseAuthentication()
                 .UseAuthorization()
                 .UseCors()
                 .UseEndpoints(endpoints => { endpoints.MapControllers(); })
