@@ -3,12 +3,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WarehouseSystem.Core.Entity;
 using WarehouseSystem.Query;
 using WarehouseSystem.Repository;
+using WarehouseSystem.Services;
 
 namespace WarehouseSystem.Controllers
 {
@@ -34,6 +36,7 @@ namespace WarehouseSystem.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize]
         public async Task<ActionResult<IReadOnlyCollection<ProductResult>>> SearchAllProducts(CancellationToken token) =>
             await _context.Products
                 .Include(p => p.QuantityChanges)
@@ -63,6 +66,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize]
         public async Task<ActionResult<ProductResult>> GetProduct(long productId, CancellationToken token)
         {
             var product = await _context.Products
@@ -101,6 +105,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize]
         public async Task<ActionResult> AddProduct([FromBody] ProductForm productForm, CancellationToken token)
         {
             var validator = new ProductForm.Validator();
@@ -132,6 +137,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize]
         public async Task<ActionResult> UpdateProduct(long productId, [FromBody] ProductForm productForm, CancellationToken token)
         {
             var validator = new ProductForm.Validator();
@@ -163,12 +169,15 @@ namespace WarehouseSystem.Controllers
         /// </summary>
         /// <response code="200">Successfully deleted Product</response>
         /// <response code="401">Only for authorise user with manager role</response>
+        /// <response code="403">User is not manager</response>
         /// <response code="404">Product with given id not found</response>
         /// <returns>Ok</returns>
         [HttpDelete("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize(Policy = Policies.ManagerOnly)]
         public async Task<ActionResult> DeleteProduct(long productId, CancellationToken token)
         {
             var productToDelete = await _context.Products
@@ -199,6 +208,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize]
         public async Task<ActionResult> ChangeQuantity(long productId, long quantityChange, CancellationToken token)
         {
             var product = await _context.Products
