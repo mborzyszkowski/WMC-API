@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WarehouseSystem.Core.Entity;
+using WarehouseSystem.Core.Helpers;
 
 namespace WarehouseSystem.Repository
 {
@@ -16,6 +17,19 @@ namespace WarehouseSystem.Repository
 
         public async Task FillDatabase()
         {
+            var users = new List<WmcUser>
+            {
+                new WmcUser
+                {
+                    Name = "manager",
+                    Password = Sha3Helper.GetHash("manager"),
+                    IsManager = true,
+                }
+            };
+
+            await _context.WmcUser.AddRangeAsync(users);
+            await _context.SaveChangesAsync();
+            
             List<Product> products = new List<Product>
             {
                 new Product
@@ -69,19 +83,6 @@ namespace WarehouseSystem.Repository
             };
 
             await _context.Products.AddRangeAsync(products);
-            
-            var users = new List<WmcUser>
-            {
-                new WmcUser
-                {
-                    Name = "manager",
-                    Password = "manager",
-                    IsManager = true,
-                }
-            };
-
-            await _context.WmcUser.AddRangeAsync(users);
-            
             await _context.SaveChangesAsync();
         }
     }
