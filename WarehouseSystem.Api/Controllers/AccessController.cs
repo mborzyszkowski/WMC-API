@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using WarehouseSystem.Core.Entity;
+using WarehouseSystem.Core.Helpers;
 using WarehouseSystem.Query;
 using WarehouseSystem.Repository;
 using WarehouseSystem.Security;
@@ -82,9 +83,11 @@ namespace WarehouseSystem.Controllers
             {
                 return BadRequest(validationResult.ToString());
             }
+
+            var passwordHash = Sha3Helper.GetHash(wmcAuth.Password);
             
             var wmcUser = await _context.WmcUser
-                .FirstOrDefaultAsync(wu => wu.Name.Equals(wmcAuth.UserName) && wu.Password.Equals(wmcAuth.Password), token);
+                .FirstOrDefaultAsync(wu => wu.Name.Equals(wmcAuth.UserName) && wu.Password.Equals(passwordHash), token);
 
             if (wmcUser == null)
             {
