@@ -106,7 +106,7 @@ namespace WarehouseSystem.Controllers
         public async Task<ActionResult<IReadOnlyCollection<string>>> AuthenticateWithWmc([FromServices] UserInfo userInfo, CancellationToken token)
             => userInfo.IsManager ? new List<string> {"employee", "manager"} : new List<string> {"employee"};
 
-        private ClaimsIdentity CreateClaimsIdentity(WmcUser wmcUser)
+        private static ClaimsIdentity CreateClaimsIdentity(WmcUser wmcUser)
         {
             ClaimsIdentity identity;
             

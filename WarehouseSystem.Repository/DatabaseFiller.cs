@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using WarehouseSystem.Core.Entity;
 using WarehouseSystem.Core.Helpers;
 
@@ -29,8 +30,10 @@ namespace WarehouseSystem.Repository
 
             await _context.WmcUser.AddRangeAsync(users);
             await _context.SaveChangesAsync();
+
+            var user = await _context.WmcUser.FirstAsync();
             
-            List<Product> products = new List<Product>
+            var products = new List<Product>
             {
                 new Product
                 {
@@ -38,17 +41,20 @@ namespace WarehouseSystem.Repository
                     ModelName = "Galaxy S9",
                     Price = 3499,
                     AddDate = new DateTime(2020, 5, 9),
+                    AddUser = user,
                     QuantityChanges = new List<ProductQuantityChange>
                     {
                         new ProductQuantityChange
                         {
                             Quantity = 3,
                             AddDate = new DateTime(2020, 5, 10),
+                            AddUser = user,
                         },
                         new ProductQuantityChange
                         {
                             Quantity = -1,
                             AddDate = new DateTime(2020, 6, 10),
+                            AddUser = user,
                         },
                     }
                 },
@@ -58,25 +64,26 @@ namespace WarehouseSystem.Repository
                     ModelName = "P9",
                     Price = 1500,
                     AddDate = new DateTime(2020, 7, 9),
+                    AddUser = user,
                     QuantityChanges = new List<ProductQuantityChange>
                     {
                         new ProductQuantityChange
                         {
                             Quantity = 6,
                             AddDate = new DateTime(2020, 7, 10),
-                            
+                            AddUser = user,
                         },
                         new ProductQuantityChange
                         {
                             Quantity = 5,
                             AddDate = new DateTime(2020, 7, 11),
-                            
+                            AddUser = user,
                         },
                         new ProductQuantityChange
                         {
                             Quantity = -1,
                             AddDate = new DateTime(2020, 7, 12),
-                            
+                            AddUser = user,
                         },
                     }
                 },

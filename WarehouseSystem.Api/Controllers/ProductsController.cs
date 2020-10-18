@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using WarehouseSystem.Core.Entity;
 using WarehouseSystem.Query;
 using WarehouseSystem.Repository;
+using WarehouseSystem.Security;
 using WarehouseSystem.Services;
 
 namespace WarehouseSystem.Controllers
@@ -53,7 +54,7 @@ namespace WarehouseSystem.Controllers
                     Price = p.Key.Price,
                     Quantity = p.Sum(c => c.Quantity),
                 })
-                .ToListAsync(cancellationToken: token);
+                .ToListAsync(token);
 
         /// <summary>
         /// Gets product from warehouse by id
@@ -106,7 +107,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Authorize]
-        public async Task<ActionResult> AddProduct([FromBody] ProductForm productForm, CancellationToken token)
+        public async Task<ActionResult> AddProduct([FromBody] ProductForm productForm, [FromServices] UserInfo userInfo, CancellationToken token)
         {
             var validator = new ProductForm.Validator();
             var validationResult = await validator.ValidateAsync(productForm, token);
@@ -115,8 +116,11 @@ namespace WarehouseSystem.Controllers
             {
                 return BadRequest(validationResult.ToString());
             }
+
+            var user = await _context.WmcUser
+                .FirstAsync(wu => wu.Id == userInfo.UserId, token);
             
-            var newProduct = Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value);
+            var newProduct = Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value, user);
 
             await _context.Products.AddAsync(newProduct, token);
             await _context.SaveChangesAsync(token);
@@ -138,7 +142,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Authorize]
-        public async Task<ActionResult> UpdateProduct(long productId, [FromBody] ProductForm productForm, CancellationToken token)
+        public async Task<ActionResult> UpdateProduct(long productId, [FromBody] ProductForm productForm, [FromServices] UserInfo userInfo, CancellationToken token)
         {
             var validator = new ProductForm.Validator();
             var validationResult = await validator.ValidateAsync(productForm, token);
@@ -157,7 +161,10 @@ namespace WarehouseSystem.Controllers
                 return NotFound();
             }
             
-            product.UpdateProduct(Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value));
+            var user = await _context.WmcUser
+                .FirstAsync(wu => wu.Id == userInfo.UserId, token);
+            
+            product.UpdateProduct(Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value, user));
             
             await _context.SaveChangesAsync(token);
 
@@ -209,7 +216,7 @@ namespace WarehouseSystem.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Authorize]
-        public async Task<ActionResult> ChangeQuantity(long productId, long quantityChange, CancellationToken token)
+        public async Task<ActionResult> ChangeQuantity(long productId, long quantityChange, [FromServices] UserInfo userInfo, CancellationToken token)
         {
             var product = await _context.Products
                 .Include(p => p.QuantityChanges)
@@ -225,7 +232,10 @@ namespace WarehouseSystem.Controllers
                 return BadRequest($"Result quantity can not be less than 0");
             }
             
-            product.QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(quantityChange));
+            var user = await _context.WmcUser
+                .FirstAsync(wu => wu.Id == userInfo.UserId, token);
+            
+            product.QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(quantityChange, user));
             await _context.SaveChangesAsync(token);
             
             return NoContent();
