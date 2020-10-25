@@ -6,6 +6,7 @@
         public string Name { get; set; }
         public string Password { get; set; }
         public string FacebookId { get; set; }
+        public string RefreshToken { get; set; }
         public bool IsManager { get; set; }
     }
 }

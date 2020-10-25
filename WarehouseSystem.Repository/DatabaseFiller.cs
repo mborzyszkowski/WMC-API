@@ -23,7 +23,8 @@ namespace WarehouseSystem.Repository
                 new WmcUser
                 {
                     Name = "manager",
-                    Password = Sha3Helper.GetHash("manager"),
+                    Password = Sha512Helper.GetHash("manager"),
+                    RefreshToken = Sha512Helper.GetRandomHash(),
                     IsManager = true,
                 }
             };
