@@ -9,8 +9,4 @@
       <_ContentIncludedByDefault Remove="Properties\launchSettings.json" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="SHA3.Net" Version="1.2.3" />
-    </ItemGroup>
-
 </Project>

@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using WarehouseSystem.Core.Helpers;
 using WarehouseSystem.Options;
 using WarehouseSystem.Query;
 
@@ -37,6 +38,7 @@ namespace WarehouseSystem.Security
             return new TokenResult
             {
                 Token = handler.WriteToken(jwtToken),
+                RefreshToken = Sha512Helper.GetRandomHash(),
                 ExpirationDate = expiration
             };
         }

@@ -32,6 +32,7 @@ namespace WarehouseSystem.Controllers
         }
 
         [HttpPost("facebook")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<TokenResult>> AuthenticateWithFacebook([FromBody] FacebookAuthForm facebookAuth, CancellationToken token)
         {
@@ -67,12 +68,13 @@ namespace WarehouseSystem.Controllers
                 await _context.SaveChangesAsync(token);
             }
 
-            var identity = CreateClaimsIdentity(wmcUser);
+            var resultToken = await CreateToken(wmcUser, token);
 
-            return Ok(_tokenService.GenerateToken(identity));
+            return Ok(resultToken);
         }
 
         [HttpPost("wmc")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<TokenResult>> AuthenticateWithWmc([FromBody] WmcAuthForm wmcAuth, CancellationToken token)
         {
@@ -84,7 +86,7 @@ namespace WarehouseSystem.Controllers
                 return BadRequest(validationResult.ToString());
             }
 
-            var passwordHash = Sha3Helper.GetHash(wmcAuth.Password);
+            var passwordHash = Sha512Helper.GetHash(wmcAuth.Password);
             
             var wmcUser = await _context.WmcUser
                 .FirstOrDefaultAsync(wu => wu.Name.Equals(wmcAuth.UserName) && wu.Password.Equals(passwordHash), token);
@@ -94,9 +96,32 @@ namespace WarehouseSystem.Controllers
                 return BadRequest();
             }
 
-            var identity = CreateClaimsIdentity(wmcUser);
-                
-            return Ok(_tokenService.GenerateToken(identity));
+            var resultToken = await CreateToken(wmcUser, token);
+
+            return Ok(resultToken);
+        }
+
+        [HttpPost("token/refresh")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<TokenResult>> RefreshToken([FromBody] RefreshTokenForm refreshToken, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken.Token))
+            {
+                return BadRequest();
+            }
+
+            var wmcUser = await _context.WmcUser
+                .FirstOrDefaultAsync(wu => refreshToken.Token.Equals(wu.RefreshToken), token);
+
+            if (wmcUser == null)
+            {
+                return BadRequest();
+            }
+
+            var resultToken = await CreateToken(wmcUser, token);
+
+            return Ok(resultToken);
         }
 
         [HttpGet("role")]
@@ -127,6 +152,18 @@ namespace WarehouseSystem.Controllers
             }
 
             return identity;
+        }
+
+        private async Task<TokenResult> CreateToken(WmcUser wmcUser, CancellationToken token)
+        {
+            var identity = CreateClaimsIdentity(wmcUser);
+
+            var resultToken = _tokenService.GenerateToken(identity);
+
+            wmcUser.RefreshToken = resultToken.RefreshToken;
+            await _context.SaveChangesAsync(token);
+
+            return resultToken;
         }
     }
 }
