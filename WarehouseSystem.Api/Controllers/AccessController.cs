@@ -131,6 +131,18 @@ namespace WarehouseSystem.Controllers
         public async Task<ActionResult<IReadOnlyCollection<string>>> AuthenticateWithWmc([FromServices] UserInfo userInfo, CancellationToken token)
             => userInfo.IsManager ? new List<string> {"employee", "manager"} : new List<string> {"employee"};
 
+        private async Task<TokenResult> CreateToken(WmcUser wmcUser, CancellationToken token)
+        {
+            var identity = CreateClaimsIdentity(wmcUser);
+
+            var resultToken = _tokenService.GenerateToken(identity);
+
+            wmcUser.RefreshToken = resultToken.RefreshToken;
+            await _context.SaveChangesAsync(token);
+
+            return resultToken;
+        }
+        
         private static ClaimsIdentity CreateClaimsIdentity(WmcUser wmcUser)
         {
             ClaimsIdentity identity;
@@ -152,18 +164,6 @@ namespace WarehouseSystem.Controllers
             }
 
             return identity;
-        }
-
-        private async Task<TokenResult> CreateToken(WmcUser wmcUser, CancellationToken token)
-        {
-            var identity = CreateClaimsIdentity(wmcUser);
-
-            var resultToken = _tokenService.GenerateToken(identity);
-
-            wmcUser.RefreshToken = resultToken.RefreshToken;
-            await _context.SaveChangesAsync(token);
-
-            return resultToken;
         }
     }
 }

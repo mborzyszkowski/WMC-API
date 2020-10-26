@@ -68,7 +68,8 @@ namespace WarehouseSystem
                     .UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection()
+            app
+                //.UseHttpsRedirection()
                 .UseRouting()
                 .UseAuthentication()
                 .UseAuthorization()
