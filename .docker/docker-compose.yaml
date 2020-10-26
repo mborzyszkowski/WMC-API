@@ -11,7 +11,7 @@ services:
       ASPNETCORE_Kestrel__Certificates__Default__Password: "7d653561-e477-4898-828c-b89242c82436"
       ASPNETCORE_Kestrel__Certificates__Default__Path: /root/.aspnet/https/aspnetapp.pfx
       SECURITYOPTIONS__SECRET: iewaiwie3aig9wi3chieBai9eephai
-      SECURITYOPTIONS__EXPIRATION: 1440     # 24h in minutes
+      SECURITYOPTIONS__EXPIRATION: 20 # 20 min      # 1440     # 24h in minutes
       FILLER__USE_DEFAULT_DATA: "true"
     depends_on: 
       - db.postgres
