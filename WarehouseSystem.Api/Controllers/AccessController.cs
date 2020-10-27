@@ -135,10 +135,13 @@ namespace WarehouseSystem.Controllers
         {
             var identity = CreateClaimsIdentity(wmcUser);
 
-            var resultToken = _tokenService.GenerateToken(identity);
+            var resultToken = _tokenService.GenerateToken(identity, string.IsNullOrWhiteSpace(wmcUser.RefreshToken) ? Sha512Helper.GetRandomHash() : wmcUser.RefreshToken);
 
-            wmcUser.RefreshToken = resultToken.RefreshToken;
-            await _context.SaveChangesAsync(token);
+            if (string.IsNullOrWhiteSpace(wmcUser.RefreshToken))
+            {
+                wmcUser.RefreshToken = resultToken.RefreshToken;
+                await _context.SaveChangesAsync(token);
+            }
 
             return resultToken;
         }
