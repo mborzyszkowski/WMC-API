@@ -26,6 +26,13 @@ namespace WarehouseSystem.Repository
                     Password = Sha512Helper.GetHash("manager"),
                     RefreshToken = Sha512Helper.GetRandomHash(),
                     IsManager = true,
+                },
+                new WmcUser
+                {
+                    Name = "dealer",
+                    Password = Sha512Helper.GetHash("dealer"),
+                    RefreshToken = Sha512Helper.GetRandomHash(),
+                    IsManager = true,
                 }
             };
 
