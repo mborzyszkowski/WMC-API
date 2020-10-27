@@ -19,7 +19,7 @@ namespace WarehouseSystem.Security
             _securityOptions = securityOptions.Value;
         }
         
-        public TokenResult GenerateToken(ClaimsIdentity identity)
+        public TokenResult GenerateToken(ClaimsIdentity identity, string wmcUserRefreshToken)
         {
             var handler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_securityOptions.Secret);
@@ -38,7 +38,7 @@ namespace WarehouseSystem.Security
             return new TokenResult
             {
                 Token = handler.WriteToken(jwtToken),
-                RefreshToken = Sha512Helper.GetRandomHash(),
+                RefreshToken = wmcUserRefreshToken,
                 ExpirationDate = expiration
             };
         }
