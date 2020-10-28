@@ -124,12 +124,23 @@ namespace WarehouseSystem.Controllers
             return Ok(resultToken);
         }
 
-        [HttpGet("role")]
+        [HttpGet("userInfo")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Authorize]
-        public async Task<ActionResult<IReadOnlyCollection<string>>> AuthenticateWithWmc([FromServices] UserInfo userInfo, CancellationToken token)
-            => userInfo.IsManager ? new List<string> {"employee", "manager"} : new List<string> {"employee"};
+        public async Task<ActionResult<UserInfoResult>> GetUserInfo([FromServices] UserInfo userInfo, CancellationToken token)
+        {
+            var user = await _context.WmcUser
+                .FirstAsync(wu => wu.Id.Equals(userInfo.UserId), token);
+            
+            var userInfoResult = new UserInfoResult
+            {
+                Username = user.Name,
+                Roles = user.IsManager ? new List<string> { "employee", "manager" } : new List<string> { "employee" },
+            };
+
+            return Ok(userInfoResult);
+        }
 
         private async Task<TokenResult> CreateToken(WmcUser wmcUser, CancellationToken token)
         {
