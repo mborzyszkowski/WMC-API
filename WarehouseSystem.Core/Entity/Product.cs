@@ -12,6 +12,13 @@ namespace WarehouseSystem.Core.Entity
         public string ModelName { get; set; }
         public double Price { get; set; }
         public List<ProductQuantityChange> QuantityChanges { get; set; }
+        
+        public static Product CreateNewProduct(long id, string manufacturerName, string modelName, double price, WmcUser addUser)
+        {
+            var result = CreateNewProduct(manufacturerName, modelName, price, addUser);
+            result.Id = id;
+            return result;
+        }
 
         public static Product CreateNewProduct(string manufacturerName, string modelName, double price, WmcUser addUser) =>
             new Product

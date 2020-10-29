@@ -259,11 +259,107 @@ namespace WarehouseSystem.Controllers
             var newProductsActions = actions.Where(a => a.IsNewItem).ToList();
             var existingProductsActions = actions.Where(a => a.IsExistingItem).ToList();
             
-            resultErrors.AddRange(await ResolveNewProductsActions(newProductsActions, user, token));
             resultErrors.AddRange(await ResolveExistingProductsActions(existingProductsActions, user, token));
+            resultErrors.AddRange(await ResolveNewProductsActions(newProductsActions, user, token));
             
             return Ok(resultErrors);
         }
+        
+        private async Task<IEnumerable<string>> ResolveExistingProductsActions(IReadOnlyCollection<ProductAction> existingProductsActions, WmcUser user, CancellationToken token)
+        {
+            var resultErrors = new List<string>();
+
+            var existingProductsIds = existingProductsActions
+                .Select(epa => epa.Id)
+                .ToHashSet()
+                .ToList();
+            
+            var existingProducts = await _context.Products
+                .Include(p => p.QuantityChanges)
+                .Where(p => existingProductsIds.Contains(p.Id))
+                .ToListAsync(token);
+
+            
+            var actionsForNotExistingProducts = existingProductsActions
+                .Where(epa => existingProducts.All(ep => ep.Id != epa.Id))
+                .ToList();
+            
+            resultErrors.AddRange(actionsForNotExistingProducts.Select(pa => $"{Enum.GetName(pa.Action.GetType(), pa.Action)} error: product with id {pa.Id} does not exist"));
+
+            
+            var actionsForExistingProducts = existingProductsActions
+                .Where(epa => existingProducts.Any(ep => ep.Id == epa.Id))
+                .ToList();
+
+            
+            var deleteActions = actionsForExistingProducts
+                .Where(pa => pa.IsDeleteAction)
+                .ToList();
+
+            var productsToDelete = existingProducts.Where(ep => deleteActions.Any(pa => pa.Id == ep.Id)).ToList();
+            
+            _context.Products.RemoveRange(productsToDelete);
+            await _context.SaveChangesAsync(token);
+
+            
+            var actionsForExistingProductsAfterDelete = actionsForExistingProducts
+                    .Where(epa => !epa.IsDeleteAction && deleteActions.All(da => da.Id != epa.Id))
+                    .ToList();
+            
+            var existingProductsIdsAfterDelete = existingProductsActions
+                .Select(epa => epa.Id)
+                .ToHashSet()
+                .ToList();
+            
+            var existingProductsAfterDelete = await _context.Products
+                .Include(p => p.QuantityChanges)
+                .Where(p => existingProductsIdsAfterDelete.Contains(p.Id))
+                .ToListAsync(token);
+
+            
+            var updateActions = actionsForExistingProductsAfterDelete
+                .Where(pa => pa.IsUpdateAction)
+                .ToList();
+            
+            updateActions
+                .ForEach(pa => existingProductsAfterDelete
+                    .First(ep => ep.Id == pa.Id)
+                    .UpdateProduct(pa.CreateNewProduct(user)));
+
+            
+            var changeQuantityPositiveActions = actionsForExistingProductsAfterDelete
+                .Where(pa => pa.IsPositiveChangeQuantity)
+                .ToList();
+            
+            changeQuantityPositiveActions
+                .ForEach(pa => existingProductsAfterDelete
+                    .First(np => np.Id == pa.Id)
+                    .QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(pa.QuantityChange, user)));
+
+            
+            var changeQuantityNegativeActions = actionsForExistingProductsAfterDelete
+                .Where(pa => pa.IsNegativeChangeQuantity)
+                .OrderBy(pa => pa.QuantityChange)
+                .ToList();
+            
+            foreach (var action in changeQuantityNegativeActions)
+            {
+                var product = existingProductsAfterDelete.First(np => np.Id == action.Id);
+                if (product.QuantityChanges.Sum(qc => qc.Quantity) + action.QuantityChange >= 0)
+                {
+                    product.QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(action.QuantityChange, user));
+                }
+                else
+                {
+                    resultErrors.Add($"{Enum.GetName(action.Action.GetType(), action.Action)} error: quantity of product with id {action.Id} is less then {Math.Abs(action.QuantityChange)}");
+                }
+            }
+            
+            
+            await _context.SaveChangesAsync(token);
+            
+            return resultErrors;
+        }  
 
         private async Task<IEnumerable<string>> ResolveNewProductsActions(IReadOnlyCollection<ProductAction> newProductsActions, WmcUser user, CancellationToken token)
         {
@@ -285,10 +381,10 @@ namespace WarehouseSystem.Controllers
                 .Where(pa => pa.IsAddAction)
                 .ToList();
             
-            newProducts.AddRange(createActions.Select(pa => pa.CreateNewProduct(user)));
+            newProducts.AddRange(createActions.Select(pa => pa.CreateNewProductWithFakeId(pa.Id, user)));
             
-            resultErrors.AddRange(
-                actionsAfterDeleteActions
+            resultErrors
+                .AddRange(actionsAfterDeleteActions
                     .Where(pa => newProducts.All(np => np.Id != pa.Id) && !pa.IsAddAction)
                     .Select(pa => $"{Enum.GetName(pa.Action.GetType(), pa.Action)} error: product with id {pa.Id} does not exist"));
             
@@ -297,8 +393,8 @@ namespace WarehouseSystem.Controllers
                 .Where(pa => pa.IsUpdateAction && newProducts.Any(np => np.Id == pa.Id))
                 .ToList();
             
-            updateActions.ForEach(
-                pa => newProducts
+            updateActions
+                .ForEach(pa => newProducts
                     .First(np => np.Id == pa.Id)
                     .UpdateProduct(pa.CreateNewProduct(user)));
 
@@ -307,8 +403,8 @@ namespace WarehouseSystem.Controllers
                 .Where(pa => pa.IsPositiveChangeQuantity && newProducts.Any(np => np.Id == pa.Id))
                 .ToList();
             
-            changeQuantityPositiveActions.ForEach(
-                pa => newProducts
+            changeQuantityPositiveActions
+                .ForEach(pa => newProducts
                     .First(np => np.Id == pa.Id)
                     .QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(pa.QuantityChange, user)));
 
@@ -321,28 +417,22 @@ namespace WarehouseSystem.Controllers
             foreach (var action in changeQuantityNegativeActions)
             {
                 var product = newProducts.First(np => np.Id == action.Id);
-                if (product.QuantityChanges.Sum(qc => qc.Quantity) >= action.QuantityChange)
+                if (product.QuantityChanges.Sum(qc => qc.Quantity) + action.QuantityChange >= 0)
                 {
                     product.QuantityChanges.Add(ProductQuantityChange.CreateQuantityChange(action.QuantityChange, user));
                 }
                 else
                 {
-                    resultErrors.Add($"{Enum.GetName(action.Action.GetType(), action.Action)} error: product with id {action.Id} is less then {Math.Abs(action.QuantityChange)}");
+                    resultErrors.Add($"{Enum.GetName(action.Action.GetType(), action.Action)} error: quantity of product with id {action.Id} is less then {Math.Abs(action.QuantityChange)}");
                 }
             }
+            
+            // cleanUp negative ids and prepare to persist
+            newProducts.ForEach(p => p.Id = 0); 
             
             await _context.Products.AddRangeAsync(newProducts, token);
             await _context.SaveChangesAsync(token);
 
-            return resultErrors;
-        }  
-        
-        private async Task<IEnumerable<string>> ResolveExistingProductsActions(IReadOnlyCollection<ProductAction> existingProductsActions, WmcUser user, CancellationToken token)
-        {
-            var resultErrors = new List<string>();
-
-            
-            
             return resultErrors;
         }  
     }
