@@ -94,6 +94,15 @@ namespace WarehouseSystem.Repository
                             AddUser = user,
                         },
                     }
+                }, 
+                new Product
+                {
+                    ManufacturerName = "To delete", 
+                    ModelName = "TD",
+                    Price = 401234,
+                    AddDate = new DateTime(2020, 7, 9),
+                    AddUser = user,
+                    QuantityChanges = new List<ProductQuantityChange>(),
                 },
             };
 

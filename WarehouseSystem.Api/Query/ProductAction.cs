@@ -38,6 +38,9 @@ namespace WarehouseSystem.Query
 
         public bool IsNegativeChangeQuantity => IsChangeQuantityAction && QuantityChange < 0;
 
+        public Product CreateNewProductWithFakeId(long id, WmcUser user) =>
+            Product.CreateNewProduct(id, ManufacturerName, ModelName, Price, user);
+
         public Product CreateNewProduct(WmcUser user) =>
             Product.CreateNewProduct(ManufacturerName, ModelName, Price, user);
 
