@@ -296,15 +296,17 @@ namespace WarehouseSystem.Controllers
                 .Where(pa => pa.IsDeleteAction)
                 .ToList();
 
-            var productsToDelete = existingProducts.Where(ep => deleteActions.Any(pa => pa.Id == ep.Id)).ToList();
+            var productsToDelete = existingProducts
+                .Where(ep => deleteActions.Any(pa => pa.Id == ep.Id))
+                .ToList();
             
             _context.Products.RemoveRange(productsToDelete);
             await _context.SaveChangesAsync(token);
 
             
             var actionsForExistingProductsAfterDelete = actionsForExistingProducts
-                    .Where(epa => !epa.IsDeleteAction && deleteActions.All(da => da.Id != epa.Id))
-                    .ToList();
+                .Where(epa => !epa.IsDeleteAction && deleteActions.All(da => da.Id != epa.Id))
+                .ToList();
             
             var existingProductsIdsAfterDelete = existingProductsActions
                 .Select(epa => epa.Id)
