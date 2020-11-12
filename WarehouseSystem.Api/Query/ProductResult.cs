@@ -9,6 +9,7 @@ namespace WarehouseSystem.Query
         public string ManufacturerName { get; set; }
         public string ModelName { get; set; }
         public double Price { get; set; }
+        public double? PriceUsd { get; set; }
         public long Quantity { get; set; }
     }
 }

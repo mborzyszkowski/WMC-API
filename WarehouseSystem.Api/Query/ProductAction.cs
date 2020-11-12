@@ -19,6 +19,8 @@ namespace WarehouseSystem.Query
         public string ModelName { get; set; }
         // On update/create
         public double Price { get; set; }
+        // On update/create
+        public double? PriceUsd { get; set; }
         // On quantity change
         public long QuantityChange { get; set; }
 
@@ -39,11 +41,9 @@ namespace WarehouseSystem.Query
         public bool IsNegativeChangeQuantity => IsChangeQuantityAction && QuantityChange < 0;
 
         public Product CreateNewProductWithFakeId(long id, WmcUser user) =>
-            Product.CreateNewProduct(id, ManufacturerName, ModelName, Price, user);
+            Product.CreateNewProduct(id, ManufacturerName, ModelName, Price, PriceUsd, user);
 
         public Product CreateNewProduct(WmcUser user) =>
-            Product.CreateNewProduct(ManufacturerName, ModelName, Price, user);
-
-        // TODO: add validation rules for each item
+            Product.CreateNewProduct(ManufacturerName, ModelName, Price, PriceUsd, user);
     }
 }

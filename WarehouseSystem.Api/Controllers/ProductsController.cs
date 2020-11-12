@@ -44,8 +44,8 @@ namespace WarehouseSystem.Controllers
                 .Include(p => p.QuantityChanges)
                 .SelectMany(
                     p => p.QuantityChanges.DefaultIfEmpty(),
-                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity })
-                .GroupBy(p => new { p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price })
+                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, p.PriceUsd, c.Quantity })
+                .GroupBy(p => new { p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, p.PriceUsd })
                 .Select(p => new ProductResult
                 {
                     Id = p.Key.Id,
@@ -53,6 +53,7 @@ namespace WarehouseSystem.Controllers
                     ManufacturerName = p.Key.ManufacturerName,
                     ModelName = p.Key.ModelName,
                     Price = p.Key.Price,
+                    PriceUsd = p.Key.PriceUsd,
                     Quantity = p.Sum(c => c.Quantity),
                 })
                 .ToListAsync(token);
@@ -75,8 +76,8 @@ namespace WarehouseSystem.Controllers
                 .Include(p => p.QuantityChanges)
                 .SelectMany(
                     p => p.QuantityChanges.DefaultIfEmpty(),
-                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, c.Quantity})
-                .GroupBy(p => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price})
+                    (p, c) => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, p.PriceUsd, c.Quantity})
+                .GroupBy(p => new {p.Id, p.AddDate, p.ManufacturerName, p.ModelName, p.Price, p.PriceUsd})
                 .Select(p => new ProductResult
                 {
                     Id = p.Key.Id,
@@ -84,6 +85,7 @@ namespace WarehouseSystem.Controllers
                     ManufacturerName = p.Key.ManufacturerName,
                     ModelName = p.Key.ModelName,
                     Price = p.Key.Price,
+                    PriceUsd = p.Key.PriceUsd,
                     Quantity = p.Sum(c => c.Quantity),
                 })
                 .FirstOrDefaultAsync(p => p.Id == productId, token);
@@ -121,7 +123,7 @@ namespace WarehouseSystem.Controllers
             var user = await _context.WmcUser
                 .FirstAsync(wu => wu.Id == userInfo.UserId, token);
             
-            var newProduct = Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value, user);
+            var newProduct = Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value, productForm.PriceUsd, user);
 
             await _context.Products.AddAsync(newProduct, token);
             await _context.SaveChangesAsync(token);
@@ -165,7 +167,7 @@ namespace WarehouseSystem.Controllers
             var user = await _context.WmcUser
                 .FirstAsync(wu => wu.Id == userInfo.UserId, token);
             
-            product.UpdateProduct(Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value, user));
+            product.UpdateProduct(Product.CreateNewProduct(productForm.ManufacturerName, productForm.ModelName, productForm.Price.Value, productForm.PriceUsd, user));
             
             await _context.SaveChangesAsync(token);
 
@@ -250,8 +252,6 @@ namespace WarehouseSystem.Controllers
         public async Task<ActionResult<IReadOnlyCollection<string>>> ResolveProductsActions([FromBody] List<ProductAction> actions, [FromServices] UserInfo userInfo, CancellationToken token)
         {
             var resultErrors = new List<string>();
-            
-            // TODO: Validate actions and filter, set error for each invalid
             
             var user = await _context.WmcUser
                 .FirstAsync(wu => wu.Id == userInfo.UserId, token);

@@ -100,6 +100,7 @@ namespace WarehouseSystem.Repository
                     ManufacturerName = "To delete", 
                     ModelName = "TD",
                     Price = 401234,
+                    PriceUsd = 33124,
                     AddDate = new DateTime(2020, 7, 9),
                     AddUser = user,
                     QuantityChanges = new List<ProductQuantityChange>(),
