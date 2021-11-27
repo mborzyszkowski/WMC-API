@@ -1,2 +1,2 @@
 # WMC-API
-Warehouse Api
+Warehouse Api for WMC
