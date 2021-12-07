@@ -1,0 +1,31 @@
+version: "3.3"
+services:
+
+  warehouse.api:
+    image: warehouse.api:latest
+    environment:
+      CONNECTIONSTRINGS__WAREHOUSEDATABASE: "Host=db.postgres;Port=5432;Database=postgres;Username=postgres;Password=awhousepi"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: https://+:443;http://+:80
+      ASPNETCORE_HTTPS_PORT: <https_port>
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "<password>"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: <path>.pfx
+      SECURITYOPTIONS__SECRET: <secret>
+      SECURITYOPTIONS__EXPIRATION: 20 # 20 min      # 1440     # 24h in minutes
+      FILLER__USE_DEFAULT_DATA: "true"
+    depends_on: 
+      - db.postgres
+    ports: 
+      - 8080:80
+      - <https_port>:443
+    volumes:
+      - <path_cert_external>:<path_cert_container>
+
+  db.postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: awhousepi
+      PGDATA: /postgres
+    ports:
+      - 5432:5432
